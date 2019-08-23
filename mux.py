@@ -18,7 +18,7 @@ class Mux:
         if 2**len(select_pins) >= number_of_channels:
             self.select_pins = []
             for i in range(0,len(select_pins)):
-                self.select_pins.append(gpio.Gpio(select_pins))
+                self.select_pins.append(gpio.Gpio(select_pins[i]))
                 self.select_pins[i].set_direction(gpio.OUTPUT)
                 self.select_pins[i].set_value(gpio.LOW)
             self.current_channel = 0
