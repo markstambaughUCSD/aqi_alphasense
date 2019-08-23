@@ -4,7 +4,7 @@
 
 PINS = {"A0": 0, "A1": 1, "A2": 2, "A3": 3, "A4": 4, "A5": 5}
 
-MODES = ["BITS", "mV", "V"]
+MODES = ["bits", "mV", "V"]
 
 
 class ADC:
@@ -48,7 +48,7 @@ class ADC:
                 raw += int(open(self.val_str, 'r').read())
             self.value_bits = int(raw/self.oversample)
             self.value_mV = self.bits_to_mV(self.value_bits)
-            if mode == "BITS":
+            if mode == "bits":
                 return self.value_bits
             elif mode == "mV":
                 return self.value_mV

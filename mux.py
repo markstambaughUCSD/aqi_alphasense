@@ -21,7 +21,7 @@ class Mux:
                 self.select_pins.append(gpio.Gpio(select_pins[i]))
                 self.select_pins[i].set_direction(gpio.OUTPUT)
                 self.select_pins[i].set_value(gpio.LOW)
-            self.current_channel = 0
+                self.current_channel = 0
         else:
             print "insufficient select pins"
             return

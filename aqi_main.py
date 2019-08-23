@@ -14,8 +14,8 @@ import sqlite3
 
 # set up the analog mux
 analog_mux = mux.Mux(16, pins.MUX_EN, pins.MUX_SEL, active_low=True)
-analog_mux.select_channel(pins.CH_EMPTY)
-analog_mux.enable()
+#analog_mux.select_channel(pins.CH_EMPTY)
+#analog_mux.enable()
 print "mux initialized"
 
 # set up the ADC reading the MUX output
@@ -27,6 +27,9 @@ for i in pins.CH_REF:
     analog_mux.select_channel(i)
     mux_ADC.LUT_bits.append(mux_ADC.read("bits"))
 print "ADC initialized"
+mux_ADC.LUT_bits = [0, 4095]
+mux_ADC.LUT_mV = [0, 3300]
+
 
 # set up the PM2.5, PM10 sensor
 sensor_PM = PM.PM(pins.PM_2U5_PWM, pins.PM_10U_PWM)
@@ -70,6 +73,7 @@ def read_all_sensors():
     # read temperature, C
     analog_mux.select_channel(pins.CH_TMP36)
     aqi_frame["temp_C"] = TMP36.mV_to_C(mux_ADC.read("mV"))
+    aqi_frame["temp_C"] = 25
 
     # read NO2, ppb
     analog_mux.select_channel(pins.CH_NO2_WE)
@@ -104,9 +108,9 @@ def read_all_sensors():
     aqi_frame["PM_10u_ugpm3"] = sensor_PM.read_PM_10u_ugpm3()
 
 
-sample_period_s = 10
-report_period_s = 30
-run_time_s = 60
+sample_period_s = 3
+report_period_s = 10
+run_time_s = 30
 
 start_time_s = time()
 last_sample_time_s = start_time_s
@@ -114,11 +118,13 @@ last_report_time_s = start_time_s
 while time() < start_time_s + run_time_s:
 
     if time() - last_sample_time_s > sample_period_s:
+	print "reading sensors"
         read_all_sensors()
-        save_frame_to_db()
+        save_frame_to_db(aqi_frame)
         last_sample_time_s = time()
 
     if time() - last_report_time_s > report_period_s:
+	print "writing to web server"
         # report all data to web server since last report. Use HTTP
         last_report_time_s = time()
 

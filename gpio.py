@@ -3,7 +3,7 @@
 # gpio class for dealing with digital GPIO pins on the UDOO board
 
 INPUT = "in"
-OUTPUT = "OUT"
+OUTPUT = "out"
 HIGH = 1
 LOW = 0
 
@@ -29,7 +29,7 @@ class Gpio:
     def set_value(self, value):
         if self.direction == OUTPUT:
             if value == HIGH or value == LOW:
-                open(self.val_str, 'w').write(value)
+                open(self.val_str, 'w').write(str(value))
                 self.value = value
             else:
                 print "pin {0} invalid value: {1}".format(self.pin, value)
