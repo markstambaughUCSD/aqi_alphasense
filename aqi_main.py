@@ -12,6 +12,8 @@ import TMP36
 from time import time
 import sqlite3
 
+print "begin Air Quality Sensor"
+
 # set up the analog mux
 analog_mux = mux.Mux(16, pins.MUX_EN, pins.MUX_SEL, active_low=True)
 #analog_mux.select_channel(pins.CH_EMPTY)
@@ -21,15 +23,15 @@ print "mux initialized"
 # set up the ADC reading the MUX output
 mux_ADC = adc.ADC(pins.ADC_MUX)
 mux_ADC.oversample = 16
-mux_ADC.LUT_mV = pins.REF_mV
-mux_ADC.LUT_bits = []
+LUT_bits = []
 for i in pins.CH_REF:
     analog_mux.select_channel(i)
-    mux_ADC.LUT_bits.append(mux_ADC.read("bits"))
+    LUT_bits.append(mux_ADC.read("bits"))
+mux_ADC.LUT_bits = LUT_bits
+mux_ADC.LUT_mV = pins.REF_mV
 print "ADC initialized"
-mux_ADC.LUT_bits = [0, 4095]
-mux_ADC.LUT_mV = [0, 3300]
-
+mux_ADC.LUT_bits = [0, 4095] # TEST
+mux_ADC.LUT_mV = [0, 3300] # TEST
 
 # set up the PM2.5, PM10 sensor
 sensor_PM = PM.PM(pins.PM_2U5_PWM, pins.PM_10U_PWM)
@@ -73,7 +75,7 @@ def read_all_sensors():
     # read temperature, C
     analog_mux.select_channel(pins.CH_TMP36)
     aqi_frame["temp_C"] = TMP36.mV_to_C(mux_ADC.read("mV"))
-    aqi_frame["temp_C"] = 25
+    aqi_frame["temp_C"] = 25 # TEST
 
     # read NO2, ppb
     analog_mux.select_channel(pins.CH_NO2_WE)
@@ -109,7 +111,7 @@ def read_all_sensors():
 
 
 sample_period_s = 3
-report_period_s = 10
+report_period_s = sample_period_s*3
 run_time_s = 30
 
 start_time_s = time()
