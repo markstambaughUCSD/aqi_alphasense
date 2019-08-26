@@ -33,7 +33,7 @@ class PM:
                     self.concentration_2u5_ugpm3 = -1
                     return
             t_rising_edge_ms = 1000*time()
-            self.concentration_2u5_ugpm3 = 1000 - (t_rising_edge_ms - t_falling_edge_ms - 2)
+            self.concentration_2u5_ugpm3 = 1000 - (t_rising_edge_ms - (t_falling_edge_ms + 2))
         else:
             # output is low. Wait for rising edge, then capture the time
             while not self.input_2u5.read_value():
@@ -65,7 +65,7 @@ class PM:
                     self.concentration_10u_ugpm3 = -1
                     return
             t_rising_edge_ms = 1000*time()
-            self.concentration_10u_ugpm3 = 1000 - (t_rising_edge_ms - t_falling_edge_ms - 2)
+            self.concentration_10u_ugpm3 = 1000 - (t_rising_edge_ms - (t_falling_edge_ms + 2))
         else:
             # output is low. Wait for rising edge, then capture the time
             while not self.input_10u.read_value():
