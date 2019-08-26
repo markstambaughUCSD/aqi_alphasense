@@ -3,7 +3,7 @@
 # mux class for dealing with a 16-to-1 or or more multiplexer
 
 import gpio
-
+import time
 
 class Mux:
     """Mux class to set number of channels, enable pin, active high or low """
@@ -33,24 +33,28 @@ class Mux:
             self.enable_pin.set_value(gpio.HIGH)
         else:
             self.enable_pin.set_value(gpio.LOW)
+	self.enabled = False
 
     def enable(self):
         if self.active_low:
             self.enable_pin.set_value(gpio.LOW)
         else:
             self.enable_pin.set_value(gpio.HIGH)
+	self.enabled = True
 
     def disable(self):
         if self.active_low:
             self.enable_pin.set_value(gpio.HIGH)
         else:
             self.enable_pin.set_value(gpio.LOW)
+	self.enabled = False
 
     def select_channel(self, channel):
         if channel in range(0, self.number_of_channels):
             for i in range(0, len(self.select_pins)):
                 self.select_pins[i].set_value((channel & 2**i) >> i)
             self.current_channel = channel
+	    time.sleep(0.001)
         else:
             print "invalid channel: {0}".format(channel)
 

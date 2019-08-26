@@ -12,12 +12,16 @@ import TMP36
 from time import time
 import sqlite3
 
+sample_period_s = 5
+report_period_s = 10
+run_time_s = 30
+
 print "begin Air Quality Sensor"
 
 # set up the analog mux
 analog_mux = mux.Mux(16, pins.MUX_EN, pins.MUX_SEL, active_low=True)
-#analog_mux.select_channel(pins.CH_EMPTY)
-#analog_mux.enable()
+analog_mux.select_channel(pins.CH_EMPTY)
+analog_mux.enable()
 print "mux initialized"
 
 # set up the ADC reading the MUX output
@@ -30,13 +34,16 @@ for i in pins.CH_REF:
 mux_ADC.LUT_bits = LUT_bits
 mux_ADC.LUT_mV = pins.REF_mV
 print "ADC initialized"
-mux_ADC.LUT_bits = [0, 4095] # TEST
-mux_ADC.LUT_mV = [0, 3300] # TEST
+
+#print mux_ADC.LUT_bits
+#print mux_ADC.LUT_mV
+#mux_ADC.LUT_bits = [0, 4095] # TEST
+#mux_ADC.LUT_mV = [0, 3300] # TEST
 
 # set up the PM2.5, PM10 sensor
 sensor_PM = PM.PM(pins.PM_2U5_PWM, pins.PM_10U_PWM)
-sensor_PM.read_PM_2u5_ugpm3()
-sensor_PM.read_PM_10u_ugpm3()
+#print sensor_PM.concentration_2u5_ugpm3
+#print sensor_PM.concentration_10u_ugpm3
 if sensor_PM.concentration_2u5_ugpm3 != -1 and sensor_PM.concentration_10u_ugpm3 != -1:
     print "PM 2u5, 10u sensor initialized"
 else:
@@ -74,54 +81,68 @@ def read_all_sensors():
 
     # read temperature, C
     analog_mux.select_channel(pins.CH_TMP36)
-    aqi_frame["temp_C"] = TMP36.mV_to_C(mux_ADC.read("mV"))
-    aqi_frame["temp_C"] = 25 # TEST
+    aqi_frame["temp_C"] = int(TMP36.mV_to_C(mux_ADC.read("mV")))
+    #aqi_frame["temp_C"] = 25 # TEST
 
     # read NO2, ppb
     analog_mux.select_channel(pins.CH_NO2_WE)
     sensor_NO2.WE_mV = mux_ADC.read("mV")
     analog_mux.select_channel(pins.CH_NO2_AE)
     sensor_NO2.AE_mV = mux_ADC.read("mV")
-    aqi_frame["NO2_ppb"] = sensor_NO2.calc_ppb(aqi_frame["temp_C"])
+    aqi_frame["NO2_ppb"] = int(sensor_NO2.calc_ppb(aqi_frame["temp_C"]))
 
     # read SO2, ppb
     analog_mux.select_channel(pins.CH_SO2_WE)
     sensor_SO2.wWE_mV= mux_ADC.read("mV")
     analog_mux.select_channel(pins.CH_SO2_AE)
     sensor_SO2.AE_mV = mux_ADC.read("mV")
-    aqi_frame["SO2_ppb"] = sensor_SO2.calc_ppb(aqi_frame["temp_C"])
+    aqi_frame["SO2_ppb"] = int(sensor_SO2.calc_ppb(aqi_frame["temp_C"]))
 
     # read CO, ppb
     analog_mux.select_channel(pins.CH_CO_WE)
     sensor_CO.WE_mV = mux_ADC.read("mV")
     analog_mux.select_channel(pins.CH_CO_AE)
     sensor_CO.AE_mV = mux_ADC.read("mV")
-    aqi_frame["CO_ppb"] = sensor_CO.calc_ppb(aqi_frame["temp_C"])
+    aqi_frame["CO_ppb"] = int(sensor_CO.calc_ppb(aqi_frame["temp_C"]))
 
     # read O3, ppb
     analog_mux.select_channel(pins.CH_O3_WE)
     sensor_O3.WE_mV = mux_ADC.read("mV")
     analog_mux.select_channel(pins.CH_O3_AE)
     sensor_O3.AE_mV = mux_ADC.read("mV")
-    aqi_frame["O3_ppb"] = sensor_O3.calc_ppb(aqi_frame["temp_C"])
+    aqi_frame["O3_ppb"] = int(sensor_O3.calc_ppb(aqi_frame["temp_C"]))
 
     # read PM 2u5 and 10u, ug per m^3
-    aqi_frame["PM_2u5_ugpm3"] = sensor_PM.read_PM_2u5_ugpm3()
-    aqi_frame["PM_10u_ugpm3"] = sensor_PM.read_PM_10u_ugpm3()
+    aqi_frame["PM_2u5_ugpm3"] = int(sensor_PM.read_PM_2u5_ugpm3())
+    aqi_frame["PM_10u_ugpm3"] = int(sensor_PM.read_PM_10u_ugpm3())
 
-
-sample_period_s = 3
-report_period_s = sample_period_s*3
-run_time_s = 30
 
 start_time_s = time()
 last_sample_time_s = start_time_s
 last_report_time_s = start_time_s
+print "begin reading. {0}s sample period, {1}s report period, {2}s run time".format(sample_period_s, report_period_s, run_time_s)
+
 while time() < start_time_s + run_time_s:
 
     if time() - last_sample_time_s > sample_period_s:
 	print "reading sensors"
         read_all_sensors()
+	print """TIME: {0}
+TEMP: {1} C
+NO2: {2} ppb
+SO2: {3} ppb
+CO: {4} ppb
+O3: {5} ppb
+PM2.5: {6} ugpm3
+PM10: {7} ugpm3
+""".format(aqi_frame["time_s"], \
+aqi_frame["temp_C"], \
+aqi_frame["NO2_ppb"], \
+aqi_frame["SO2_ppb"], \
+aqi_frame["O3_ppb"], \
+aqi_frame["CO_ppb"], \
+aqi_frame["PM_2u5_ugpm3"], \
+aqi_frame["PM_10u_ugpm3"])
         save_frame_to_db(aqi_frame)
         last_sample_time_s = time()
 

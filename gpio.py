@@ -17,7 +17,7 @@ class Gpio:
         self.dir_str = "/gpio/pin" + str(self.pin) + "/direction"
         self.val_str = "/gpio/pin" + str(self.pin) + "/value"
         self.direction = open(self.dir_str, 'r').read()
-        self.value = open(self.val_str, 'r').read()
+        self.value = int(open(self.val_str, 'r').read())
 
     def set_direction(self, direction):
         if direction == INPUT or direction == OUTPUT:
@@ -37,7 +37,7 @@ class Gpio:
             print "cannot set pin {0} (input)".format(self.pin)
 
     def read_value(self):
-        self.value = open(self.val_str, 'r').read()
+        self.value = int(open(self.val_str, 'r').read())
         return self.value
 
 

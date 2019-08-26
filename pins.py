@@ -7,8 +7,8 @@ PM_2U5_PWM = 29
 PM_10U_PWM = 30
 
 # mux control pins
-MUX_EN = 24
-MUX_SEL = (25, 26, 27, 28)
+MUX_EN = 28
+MUX_SEL = [27, 26, 25, 24]
 
 # ADC channel used at the output of the mux
 ADC_MUX = "A0"
@@ -28,4 +28,4 @@ CH_EMPTY = 9
 
 # reference voltage definitions for ADC calibration
 REF_mV = [0, 500, 1000, 1500, 2000, 2500]
-CH_REF = [10, 11, 12, 13, 14, 15]
+CH_REF = [15, 14, 13, 12, 11, 10]
