@@ -33,8 +33,8 @@ for i in pins.CH_REF:
     analog_mux.select_channel(i)
     LUT_bits.append(mux_ADC.read("bits"))
 # Check for valid (monotonic increasing) references. If invalid, abort startup. 
-for i in range(1,len(LUT_bits)
-    if LUT_bits(i) <= LUT_bits(i-1)
+for i in range(1, len(LUT_bits)):
+    if LUT_bits[i] <= LUT_bits[i-1]:
 	print "ADC calibration error. Exiting program"
 	exit()
 mux_ADC.LUT_bits = LUT_bits
@@ -143,7 +143,7 @@ while time() < start_time_s + run_time_s:
                 aqi_frame["CO_ppb"], \
                 aqi_frame["O3_ppb"], \
                 aqi_frame["PM_2u5_ugpm3"], \
-                aqi_frame["PM_10u_ugpm3])
+                aqi_frame["PM_10u_ugpm3"])
 
     if time() - last_report_time_s > report_period_s:
 	print "{0} writing to web server".format(time()-start_time_s)
