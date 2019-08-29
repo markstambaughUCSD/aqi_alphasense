@@ -13,7 +13,7 @@ import TMP36
 from time import time
 import sqlite3
 
-test_ADC = True
+test_ADC = False
 
 print "begin Air Quality Sensor"
 
