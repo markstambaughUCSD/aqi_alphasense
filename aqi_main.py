@@ -2,6 +2,7 @@
 # 2019/08/29
 # main module for the UDOO air quality sensor board
 
+import config
 import pins
 import mux
 import adc
@@ -12,9 +13,7 @@ import TMP36
 from time import time
 import sqlite3
 
-sample_period_s = 3
-report_period_s = 10
-run_time_s = 30
+test_ADC = True
 
 print "begin Air Quality Sensor"
 
@@ -41,14 +40,15 @@ mux_ADC.LUT_bits = LUT_bits
 mux_ADC.LUT_mV = pins.REF_mV
 print "ADC initialized"
 
-#print mux_ADC.LUT_mV
-#print mux_ADC.LUT_bits
-
-#while True:
-#        channel = int(raw_input("channel?: "))
-#        analog_mux.select_channel(channel)
-#	print mux_ADC.read("bits")
-#	print mux_ADC.value_mV
+if test_ADC:
+	print mux_ADC.LUT_mV
+	print mux_ADC.LUT_bits
+	
+	while True:
+	        channel = int(raw_input("channel?: "))
+        	analog_mux.select_channel(channel)
+		print mux_ADC.read("bits")
+		print mux_ADC.value_mV
 
 # set up the PM2.5, PM10 sensor
 sensor_PM = PM.PM(pins.PM_2U5_PWM, pins.PM_10U_PWM)
@@ -123,14 +123,16 @@ def read_all_sensors():
     aqi_frame["PM_2u5_ugpm3"] = int(round(sensor_PM.read_PM_2u5_ugpm3()))
     aqi_frame["PM_10u_ugpm3"] = int(round(sensor_PM.read_PM_10u_ugpm3()))
 
+
+
 start_time_s = time()
 last_sample_time_s = start_time_s
 last_report_time_s = start_time_s
-print "begin reading. {0}s sample period, {1}s report period, {2}s run time".format(sample_period_s, report_period_s, run_time_s)
+print "begin reading. {0}s sample period, {1}s report period, {2}s run time".format(config.sample_period_s, config.report_period_s, config.run_time_s)
 print "TIME(s)    TEMP(C) NO2(ppb) SO2(ppb) CO(ppb) O3(ppb) PM2u5(ugpm3) PM10u(ugpm3)"
 
-while time() < start_time_s + run_time_s:
-    if time() - last_sample_time_s > sample_period_s:
+while time() < start_time_s + config.run_time_s:
+    if time() - last_sample_time_s > config.sample_period_s:
 	last_sample_time_s = time()
 	#print "{0} reading sensors".format(time()-start_time_s)
         read_all_sensors()
@@ -145,7 +147,7 @@ while time() < start_time_s + run_time_s:
                 aqi_frame["PM_2u5_ugpm3"], \
                 aqi_frame["PM_10u_ugpm3"])
 
-    if time() - last_report_time_s > report_period_s:
+    if time() - last_report_time_s > config.report_period_s:
 	print "{0} writing to web server".format(time()-start_time_s)
         # report all data to web server since last report. Use HTTP
         last_report_time_s = time()
