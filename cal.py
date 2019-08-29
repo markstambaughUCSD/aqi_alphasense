@@ -2,9 +2,9 @@
 # 2019/07/26
 # calibration data for Alphasense array of sensors
 
-# calibration values for A4 sensor array 25-000015. All in mV or mV/ppb
-NO2 = {"WE0": 215,
-       "AE0": 246,
+# calibration values for A4 sensor array 25-0000161. All in mV or mV/ppb
+NO2 = {"WE0": 287,
+       "AE0": 292,
        "SENS": 0.212,
        "TEMP": {-30: 1.18,
                 -20: 1.18,
@@ -17,8 +17,8 @@ NO2 = {"WE0": 215,
                 50: 2.70}
        }
 
-O3 = {"WE0": 390,
-      "AE0": 393,
+O3 = {"WE0": 418,
+      "AE0": 404,
       "SENS": 0.276,
       "TEMP": {-30: 0.18,
                -20: 0.18,
@@ -31,8 +31,8 @@ O3 = {"WE0": 390,
                50: 2.87}
       }
 
-CO = {"WE0": 326,
-      "AE0": 280,
+CO = {"WE0": 345,
+      "AE0": 315,
       "SENS": 0.266,
       "TEMP": {-30: 1.40,
                -20: 1.03,
@@ -45,8 +45,8 @@ CO = {"WE0": 326,
                50: -0.80}
       }
 
-SO2 = {"WE0": 280,
-       "AE0": 306,
+SO2 = {"WE0": 333,
+       "AE0": 274,
        "SENS": 0.296,
        "TEMP": {-30: 0.85,
                 -20: 0.85,

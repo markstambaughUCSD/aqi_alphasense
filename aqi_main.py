@@ -1,5 +1,5 @@
 # Mark Stambaugh
-# 2019/07/26
+# 2019/08/29
 # main module for the UDOO air quality sensor board
 
 import pins
@@ -20,30 +20,38 @@ print "begin Air Quality Sensor"
 
 # set up the analog mux
 analog_mux = mux.Mux(16, pins.MUX_EN, pins.MUX_SEL, active_low=True)
-analog_mux.select_channel(pins.CH_EMPTY)
+analog_mux.select_channel(pins.CH_TMP36)
 analog_mux.enable()
 print "mux initialized"
 
 # set up the ADC reading the MUX output
 mux_ADC = adc.ADC(pins.ADC_MUX)
-mux_ADC.oversample = 16
+mux_ADC.oversample = 256
+# Calibrate the ADC by reading the reference inputs
 LUT_bits = []
 for i in pins.CH_REF:
     analog_mux.select_channel(i)
     LUT_bits.append(mux_ADC.read("bits"))
+# Check for valid (monotonic increasing) references. If invalid, abort startup. 
+for i in range(1,len(LUT_bits)
+    if LUT_bits(i) <= LUT_bits(i-1)
+	print "ADC calibration error. Exiting program"
+	exit()
 mux_ADC.LUT_bits = LUT_bits
 mux_ADC.LUT_mV = pins.REF_mV
 print "ADC initialized"
 
-print mux_ADC.LUT_bits
-print mux_ADC.LUT_mV
-#mux_ADC.LUT_bits = [0, 4095] # TEST
-#mux_ADC.LUT_mV = [0, 3300] # TEST
+#print mux_ADC.LUT_mV
+#print mux_ADC.LUT_bits
+
+#while True:
+#        channel = int(raw_input("channel?: "))
+#        analog_mux.select_channel(channel)
+#	print mux_ADC.read("bits")
+#	print mux_ADC.value_mV
 
 # set up the PM2.5, PM10 sensor
 sensor_PM = PM.PM(pins.PM_2U5_PWM, pins.PM_10U_PWM)
-#print sensor_PM.concentration_2u5_ugpm3
-#print sensor_PM.concentration_10u_ugpm3
 if sensor_PM.concentration_2u5_ugpm3 != -1 and sensor_PM.concentration_10u_ugpm3 != -1:
     print "PM 2u5, 10u sensor initialized"
 else:
@@ -115,47 +123,30 @@ def read_all_sensors():
     aqi_frame["PM_2u5_ugpm3"] = int(round(sensor_PM.read_PM_2u5_ugpm3()))
     aqi_frame["PM_10u_ugpm3"] = int(round(sensor_PM.read_PM_10u_ugpm3()))
 
-
 start_time_s = time()
 last_sample_time_s = start_time_s
 last_report_time_s = start_time_s
 print "begin reading. {0}s sample period, {1}s report period, {2}s run time".format(sample_period_s, report_period_s, run_time_s)
+print "TIME(s)    TEMP(C) NO2(ppb) SO2(ppb) CO(ppb) O3(ppb) PM2u5(ugpm3) PM10u(ugpm3)"
 
 while time() < start_time_s + run_time_s:
-
     if time() - last_sample_time_s > sample_period_s:
 	last_sample_time_s = time()
-	print "{0} reading sensors".format(time()-start_time_s)
+	#print "{0} reading sensors".format(time()-start_time_s)
         read_all_sensors()
-	print """TIME: {0}
-TEMP: {1} C
-NO2: {2} ppb
-SO2: {3} ppb
-CO: {4} ppb
-O3: {5} ppb
-PM2.5: {6} ugpm3
-PM10: {7} ugpm3
-""".format(aqi_frame["time_s"], \
-aqi_frame["temp_C"], \
-aqi_frame["NO2_ppb"], \
-aqi_frame["SO2_ppb"], \
-aqi_frame["O3_ppb"], \
-aqi_frame["CO_ppb"], \
-aqi_frame["PM_2u5_ugpm3"], \
-aqi_frame["PM_10u_ugpm3"])
         save_frame_to_db(aqi_frame)
-	print sensor_NO2.WE_mV
-	print sensor_NO2.AE_mV
-        print sensor_SO2.WE_mV
-        print sensor_SO2.AE_mV
-        print sensor_O3.WE_mV
-        print sensor_O3.AE_mV
-        print sensor_CO.WE_mV
-        print sensor_CO.AE_mV
-
+	print "%10d %+03d     %04d     %04d     %04d    %04d    %03d          %03d" %( \
+		aqi_frame["time_s"], \
+		aqi_frame["temp_C"], \
+                aqi_frame["NO2_ppb"], \
+                aqi_frame["SO2_ppb"], \
+                aqi_frame["CO_ppb"], \
+                aqi_frame["O3_ppb"], \
+                aqi_frame["PM_2u5_ugpm3"], \
+                aqi_frame["PM_10u_ugpm3])
 
     if time() - last_report_time_s > report_period_s:
-	print "{0} writing to web server\n".format(time()-start_time_s)
+	print "{0} writing to web server".format(time()-start_time_s)
         # report all data to web server since last report. Use HTTP
         last_report_time_s = time()
 
