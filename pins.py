@@ -14,14 +14,16 @@ MUX_SEL = [25, 26, 27, 28]
 ADC_MUX = "A5"
 
 # mux channel definitions
-CH_NO2_WE = 11
-CH_NO2_AE = 15
-CH_O3_WE = 10
-CH_O3_AE = 14
-CH_CO_WE = 8
-CH_CO_AE = 13
-CH_SO2_WE = 9
-CH_SO2_AE = 12
+CH_GAS = {"NO2_WE": 11, 
+		  "NO2_AE": 15, 
+		  "O3_WE": 10, 
+		  "O3_AE": 14, 
+		  "CO_WE": 8, 
+		  "CO_AE": 13, 
+		  "SO2_WE": 9, 
+		  "SO2_AE": 12
+		  }
+
 CH_TMP36 = 7
 
 # reference voltage definitions for ADC calibration

@@ -14,8 +14,6 @@ from time import time
 import sqlite3
 import requests
 
-test_ADC = False
-
 print "begin Air Quality Sensor"
 
 # set up the analog mux
@@ -41,18 +39,12 @@ mux_ADC.LUT_bits = LUT_bits
 mux_ADC.LUT_mV = pins.REF_mV
 print "ADC initialized"
 
-if test_ADC:
-	print mux_ADC.LUT_mV
-	print mux_ADC.LUT_bits
-	
-	while True:
-		channel = int(raw_input("channel?: "))
-		analog_mux.select_channel(channel)
-		print mux_ADC.read("bits")
-		print mux_ADC.value_mV
+
 
 # set up the PM2.5, PM10 sensor
 sensor_PM = PM.PM(pins.PM_2U5_PWM, pins.PM_10U_PWM)
+sensor_PM.read_PM_2u5_ugpm3()
+sensor_PM.read_PM_10u_ugpm3()
 if sensor_PM.concentration_2u5_ugpm3 != -1 and sensor_PM.concentration_10u_ugpm3 != -1:
 	print "PM 2u5, 10u sensor initialized"
 else:
@@ -106,30 +98,30 @@ def read_all_sensors():
 	aqi_frame["temp_C"] = int(TMP36.mV_to_C(mux_ADC.read("mV")))
 	
 	# read NO2, ppb
-	analog_mux.select_channel(pins.CH_NO2_WE)
+	analog_mux.select_channel(pins.CH_GAS["NO2_WE"])
 	sensor_NO2.WE_mV = mux_ADC.read("mV")
-	analog_mux.select_channel(pins.CH_NO2_AE)
+	analog_mux.select_channel(pins.CH_GAS["NO2_AE"])
 	sensor_NO2.AE_mV = mux_ADC.read("mV")
 	aqi_frame["NO2_ppb"] = int(sensor_NO2.calc_ppb(aqi_frame["temp_C"]))
 	
 	# read SO2, ppb
-	analog_mux.select_channel(pins.CH_SO2_WE)
+	analog_mux.select_channel(pins.CH_GAS["SO2_WE"])
 	sensor_SO2.WE_mV= mux_ADC.read("mV")
-	analog_mux.select_channel(pins.CH_SO2_AE)
+	analog_mux.select_channel(pins.CH_GAS["SO2_AE"])
 	sensor_SO2.AE_mV = mux_ADC.read("mV")
 	aqi_frame["SO2_ppb"] = int(sensor_SO2.calc_ppb(aqi_frame["temp_C"]))
 	
 	# read CO, ppb
-	analog_mux.select_channel(pins.CH_CO_WE)
+	analog_mux.select_channel(pins.CH_GAS["CO_WE"])
 	sensor_CO.WE_mV = mux_ADC.read("mV")
-	analog_mux.select_channel(pins.CH_CO_AE)
+	analog_mux.select_channel(pins.CH_GAS["CO_AE"])
 	sensor_CO.AE_mV = mux_ADC.read("mV")
 	aqi_frame["CO_ppb"] = int(sensor_CO.calc_ppb(aqi_frame["temp_C"]))
 	
 	# read O3, ppb
-	analog_mux.select_channel(pins.CH_O3_WE)
+	analog_mux.select_channel(pins.CH_GAS["O3_WE"])
 	sensor_O3.WE_mV = mux_ADC.read("mV")
-	analog_mux.select_channel(pins.CH_O3_AE)
+	analog_mux.select_channel(pins.CH_GAS["O3_AE"])
 	sensor_O3.AE_mV = mux_ADC.read("mV")
 	aqi_frame["O3_ppb"] = int(sensor_O3.calc_ppb(aqi_frame["temp_C"]))
 	
@@ -162,7 +154,46 @@ def gather_data_and_save(sample_period_s, report_period_s, run_time_s):
 			last_report_time_s = time()
 
 
-gather_data_and_save(config.sample_period_s, config.report_period_s, config.run_time_s)
+def test_mux_and_ADC():
+	print "begin mux/ADC test mode"
+	print "ADC calibration LUT:"
+	print "mV: ", mux_ADC.LUT_mV
+	print "bits: ", mux_ADC.LUT_bits
+	print "select negative channel value to exit"
+	
+	while True:
+		channel = int(raw_input("channel?: "))
+		if channel < 0:
+			print "exiting mux/ADC test mode"
+			break
+		analog_mux.select_channel(channel)
+		print mux_ADC.read("bits")
+		print mux_ADC.value_mV
 
 
+def calibrate_alphasense():
+	print "begin Alphasense calibration"
+	for key in pins.CH_GAS:
+		analog_mux.select_channel(pins.CH_GAS[key])
+		mV = int(round(mux_ADC.read("mV")))
+		print key, pins.CH_GAS[key], mV
 
+
+while True:
+	print """\navailable  commands:
+	g: gather data and save to web server
+	t: test mux/ADC
+	c: calibrate Alphasense array
+	e: exit program
+"""
+
+	command = raw_input("command?:")
+	if command == 'g':
+		gather_data_and_save(config.sample_period_s, config.report_period_s, config.run_time_s)
+	if command == 't':
+		test_mux_and_ADC()
+	if command == 'c':
+		calibrate_alphasense()
+	if command == 'e':
+		print "exiting program"
+		exit()
