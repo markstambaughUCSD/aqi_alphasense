@@ -68,12 +68,11 @@ print "gas sensors calibration loaded"
 # initialize data frame
 aqi_frame = {"time_s": 0, "temp_C": 25, "NO2_ppb": 0, "SO2_ppb": 0, "CO_ppb": 0, "O3_ppb": 0, "PM_2u5_ugpm3": 0, "PM_10u_ugpm3": 0}
 
-# setup database
+# set up database
 conn = sqlite3.connect("aqi.db")
 c = conn.cursor()
 c.execute("CREATE TABLE IF NOT EXISTS history (time_s INT PRIMARY KEY NOT NULL, temp INT, NO2_ppb INT, SO2_ppb INT, CO_ppb INT, O3_ppb INT, PM_2u5_ugpm3 INT, PM_10_ugpm3 INT)")
 conn.close()
-
 
 # save one set of data to the local database
 def save_frame_to_db(f):
@@ -93,10 +92,9 @@ def upload_to_server(start_time, stop_time):
 	rows = c.fetchall()
 	for row in rows:
 		frame = {"time_s": row[0], "temp_C": row[1], "NO2_ppb": row[2], "SO2_ppb": row[3], "CO_ppb": row[4], "O3_ppb": row[5], "PM_2u5_ugpm3": row[6], "PM_10u_ugpm3": row[7]}
-#		r = requests.post(url = config.API_ENDPOINT, data = frame}
-#		print r
-#		print row
-#		print frame
+		r = requests.post(url = config.ENDPOINT, data = frame)
+		if r.status_code != 200:
+			print "HTTP post failed. Frame time: %d" %frame("time_s")
 
 
 # gather full set of data
@@ -140,25 +138,31 @@ def read_all_sensors():
 	aqi_frame["PM_10u_ugpm3"] = int(round(sensor_PM.read_PM_10u_ugpm3()))
 
 
-start_time_s = time()
-last_sample_time_s = start_time_s
-last_report_time_s = start_time_s
-print "begin reading. {0}s sample period, {1}s report period, {2}s run time".format(config.sample_period_s, config.report_period_s, config.run_time_s)
-print "TIME(s)    TEMP(C) NO2(ppb) SO2(ppb) CO(ppb) O3(ppb) PM2u5(ugpm3) PM10u(ugpm3)"
-
-while time() < start_time_s + config.run_time_s:
-	if time() - last_sample_time_s > config.sample_period_s:
-		last_sample_time_s = time()
-		#print "{0} reading sensors".format(time()-start_time_s)
-		read_all_sensors()
-		save_frame_to_db(aqi_frame)
-		print "%10d %+03d     %04d     %04d     %04d    %04d    %03d          %03d" %( \
-		aqi_frame["time_s"], aqi_frame["temp_C"], aqi_frame["NO2_ppb"], aqi_frame["SO2_ppb"], \
-		aqi_frame["CO_ppb"], aqi_frame["O3_ppb"], aqi_frame["PM_2u5_ugpm3"], aqi_frame["PM_10u_ugpm3"])
+def gather_data_and_save(sample_period_s, report_period_s, run_time_s):
+	start_time_s = time()
+	last_sample_time_s = start_time_s
+	last_report_time_s = start_time_s
+	print "begin reading. {0}s sample period, {1}s report period, {2}s run time".format(sample_period_s, report_period_s, run_time_s)
+	print "TIME(s)    TEMP(C) NO2(ppb) SO2(ppb) CO(ppb) O3(ppb) PM2u5(ugpm3) PM10u(ugpm3)"
 	
-	if time() - last_report_time_s > config.report_period_s:
-		print "%d writing to web server" %(time() - start_time_s)
-		# report all data to web server since last report. Use HTTP.
-		upload_to_server(last_report_time_s, time())
-		last_report_time_s = time()
+	while time() < start_time_s + config.run_time_s:
+		if time() - last_sample_time_s > config.sample_period_s:
+			last_sample_time_s = time()
+			#print "{0} reading sensors".format(time()-start_time_s)
+			read_all_sensors()
+			save_frame_to_db(aqi_frame)
+			print "%10d %+03d     %04d     %04d     %04d    %04d    %03d          %03d" %( \
+			aqi_frame["time_s"], aqi_frame["temp_C"], aqi_frame["NO2_ppb"], aqi_frame["SO2_ppb"], \
+			aqi_frame["CO_ppb"], aqi_frame["O3_ppb"], aqi_frame["PM_2u5_ugpm3"], aqi_frame["PM_10u_ugpm3"])
+		
+		if time() - last_report_time_s > config.report_period_s:
+			print "%d writing to web server" %(time() - start_time_s)
+			# report all data to web server since last report. Use HTTP.
+			upload_to_server(last_report_time_s, time())
+			last_report_time_s = time()
+
+
+gather_data_and_save(config.sample_period_s, config.report_period_s, config.run_time_s)
+
+
 
