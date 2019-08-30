@@ -152,6 +152,9 @@ def gather_data_and_save(sample_period_s, report_period_s, run_time_s):
 			# report all data to web server since last report. Use HTTP.
 			upload_to_server(last_report_time_s, time())
 			last_report_time_s = time()
+		
+		# one last upload for any remaining data
+		upload_to_server(last_report_time_s, time())
 
 
 def test_mux_and_ADC():
@@ -172,7 +175,7 @@ def test_mux_and_ADC():
 
 
 def calibrate_alphasense():
-	print "begin Alphasense calibration"
+	print "begin Alphasense calibration(mV)"
 	for key in pins.CH_GAS:
 		analog_mux.select_channel(pins.CH_GAS[key])
 		mV = int(round(mux_ADC.read("mV")))
