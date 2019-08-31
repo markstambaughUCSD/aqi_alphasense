@@ -153,8 +153,9 @@ def gather_data_and_save(sample_period_s, report_period_s, run_time_s):
 			upload_to_server(last_report_time_s, time())
 			last_report_time_s = time()
 		
-		# one last upload for any remaining data
-		upload_to_server(last_report_time_s, time())
+	# one last upload for any remaining data
+	print "%d writing to web server" %(time() - start_time_s)
+	upload_to_server(last_report_time_s, time())
 
 
 def test_mux_and_ADC():
